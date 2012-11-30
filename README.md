@@ -1,4 +1,10 @@
-hist-review
-===========
+A Review of Histograms
+======================
 
-A Review of Histogram techniques
+Authors
+-------
+Jake Vanderplas
+Kevin Knuth
+Jeffrey Scargle
+Michael Way
+

@@ -1,0 +1,75 @@
+\documentclass[12pt]{article}
+
+\usepackage{graphicx}
+\graphicspath{{figs/}}
+\usepackage{natbib}
+
+\usepackage{color}
+\newcommand{\comment}[1]{{\color{red} [#1]}}
+
+\newcommand{\given}{\,|\,}
+\newcommand{\setof}[1]{\left\{{#1}\right\}}
+\newcommand{\train}{\mathrm{train}}
+\newcommand{\valid}{\mathrm{valid}}
+\newcommand{\dd}{\mathrm{d}}
+
+\newcommand{\eqn}[1]{eq.~(\ref{eq:#1})}
+\newcommand{\fig}[1]{Fig.~\ref{fig:#1}}
+\newcommand{\paper}{paper}
+
+\title{A Review of Histograms}
+\author{Jake Vanderplas}
+%\affil{Astronomy Department, University of Washington, Box 351580, Seattle, WA 98195-1580}
+\bibliographystyle{apj}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  Histograms are a fundamental and often-used technique in data analysis and
+  exporation.  The result of a histogram binning depends strongly on the
+  choice of the size and location of the histogram bins, but these free
+  parameters are often chosen in an ad-hoc manner.  In this document, we
+  review and compare several approaches to selecting histogram bins in a
+  more rigorous manner, and present flexible Python implementations of
+  the various methods.
+\end{abstract}
+
+\section{Introduction}
+\subsection{Early Uses}
+
+\subsection{Rules of Thumb}
+\begin{enumerate}
+\item Scott's normal reference rule \citep{Scott1979}
+\item Freedman-Diaconis rule \citep{Freedman1981}
+\end{enumerate}
+
+\section{Fixed-width Bins}
+\begin{enumerate}
+\item Knuth's Method \citep{Knuth2006}
+\item Hogg's Method \citep{Hogg2008}
+\end{enumerate}
+
+\section{Variable-width Bins}
+\begin{enumerate}
+\item Bayesian Blocks \citep{Scargle2012}
+\end{enumerate}
+
+\section{Examples}
+Some example Plots
+
+\section{Conclusion}
+\bibliography{histograms}
+
+\begin{appendix}
+\section{Derivations}
+
+Some math comparing the methods here...
+
+
+\section{Python Code}
+Some examples using astroML
+
+
+\end{appendix}
+\end{document}
