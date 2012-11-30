@@ -3,6 +3,7 @@
 \usepackage{graphicx}
 \graphicspath{{figs/}}
 \usepackage{natbib}
+\usepackage{amsmath}
 
 \usepackage{color}
 \newcommand{\comment}[1]{{\color{red} [#1]}}
@@ -36,21 +37,88 @@
 \end{abstract}
 
 \section{Introduction}
-\subsection{Early Uses}
+Probably first used by John Graunt in 1662 \citep{Scott1979}
+Term coined by Karl Pearson at the end of the 19th century.
+[History of histograms and their use in database management systems:
+\citet{Ioannidis2003}].
+
+\subsection{Histograms as Density Estimators}
+notation and relationship to KDE.  Good KDE references/reviews?
 
 \subsection{Rules of Thumb}
-\begin{enumerate}
-\item Scott's normal reference rule \citep{Scott1979}
-\item Freedman-Diaconis rule \citep{Freedman1981}
-\end{enumerate}
+\begin{itemize}
+\item mention ``at least $K$ in each bin''-type rules
+  (and Microsoft Excel's silly $\sqrt{n}$ rule).
+\end{itemize}
 
-\section{Fixed-width Bins}
+\subsection{Sturges' Rule}
+Perhaps the earliest rule-of-thumb for choosing histogram bin widths is
+Sturges' Rule \citep{Sturges1926}:
+\begin{equation}
+  \label{eqn:sturges}
+  \hat{k} = 1 + \log_2(n)
+\end{equation}
+Sturges' original paper gives only a brief verbal argument for this result.
+As elucidated in \citet{Scott2009}, Sturges' rule is derived from the
+assumption that the underlying distribution is close to Gaussian, and
+can be approximated by a binomial distribution within the bins.  For $k$ bins,
+he assumed that the number of points in the $i^{th}$ bin is 
+\begin{equation}
+  n_i = \binom{k - 1}{i}.
+\end{equation}
+Summing these over all bins and using the binomial identity gives
+\begin{eqnarray}
+  n &=& \sum_{i=0}^{k-1} \binom{k-1}{i}\\
+    &=& 2^{k - 1}
+\end{eqnarray}
+Oweing to the simplicity of computing \eqn{sturges}, it is a very commonly
+used rule-of-thumb in statistical software packages.  Nevertheless, for
+samples much larger than $N \approx 100$, Sturges' rule results in greatly
+over-smoothed histograms, and thus it should not be relied upon in practice
+\citep{Scott2009}.
+
+\subsection{Asymptotic Approximations}
+Mention that \citet{Birge2003} explores various loss functions... here
+and below we will focus on the mean integrated square error.
+
+\subsubsection{Scott's Rule}
+By minimizing the MISE in the limit of large $n$ and small $h_n$, 
+\citep{Scott1979} found
+\begin{equation}
+  \label{eq:scotts_rule}
+  h^\ast = \left[\frac{6}{\int_{-\infty}^\infty f^\prime(x)^2 \dd x}\right]^{1/3}
+  N^{-1/3}
+\end{equation}
+For a Gaussian distribution with standard deviation $\sigma$, this is 
+\begin{eqnarray}
+  \label{eq:scotts_rule_norm}
+  h^\ast &=& (24\sqrt{\pi})^{1/3}\sigma N^{-1/3}\\
+        &\approx& 3.49 \sigma N^{-1/3}
+\end{eqnarray}
+\citet{Scott1979} tests this approximation for small sample sizes using Monte
+Carlo techniques, and finds that the approximation is adequate for samples
+as small as 25.  For distributions which differ from Gaussian,
+\eqn{scotts_rule_norm} over-smooths the distribution, and a correction factor
+based on the kurtosis of the distribution can be applied to remedy this.  See
+discussion in \citet{Scott1979} for details.
+
+
+\subsubsection{Freedman-Diaconis rule}
+\citep{Freedman1981}
+Very similar to Scott's Rule, but a more rigorous (vide: opaque) derivation.
+\citet{Freedman1981} state that they will report their numerical simulations
+elsewhere... I have yet to find them.
+
+\section{Fitness-based Functions}
+
+\subsection{Fixed-width Bins}
 \begin{enumerate}
 \item Knuth's Method \citep{Knuth2006}
 \item Hogg's Method \citep{Hogg2008}
 \end{enumerate}
 
-\section{Variable-width Bins}
+\subsection{Variable-width Bins}
+Mention that \citet{Birge2003} recommends against this...
 \begin{enumerate}
 \item Bayesian Blocks \citep{Scargle2012}
 \end{enumerate}
@@ -59,6 +127,8 @@
 Some example Plots
 
 \section{Conclusion}
+Recommendations: which of these should be used in practice?
+
 \bibliography{histograms}
 
 \begin{appendix}

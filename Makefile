@@ -6,8 +6,8 @@ LATEX = pdflatex
 BIBTEX = bibtex
 CHECK_RERUN = grep Rerun $*.log
 
-histograms.pdf: histograms.tex histograms.bib
-	${LATEX} histograms
-	${BIBTEX} histograms
-	( ${CHECK_RERUN} && ${LATEX} histograms ) || echo "Done."
-	( ${CHECK_RERUN} && ${LATEX} histograms ) || echo "Done."
+%.pdf: %.tex
+	${LATEX} $*
+	${BIBTEX} $*
+	( ${CHECK_RERUN} && ${LATEX} $* ) || echo "Done."
+	( ${CHECK_RERUN} && ${LATEX} $* ) || echo "Done."
