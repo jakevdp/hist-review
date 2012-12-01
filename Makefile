@@ -6,7 +6,10 @@ LATEX = pdflatex
 BIBTEX = bibtex
 CHECK_RERUN = grep Rerun $*.log
 
-%.pdf: %.tex
+figures:
+	python generate_figs.py
+
+%.pdf: %.tex figures
 	${LATEX} $*
 	${BIBTEX} $*
 	( ${CHECK_RERUN} && ${LATEX} $* ) || echo "Done."

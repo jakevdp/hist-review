@@ -6,7 +6,7 @@
 \usepackage{amsmath}
 
 \usepackage{color}
-\newcommand{\comment}[1]{{\color{red} [#1]}}
+\newcommand{\comment}[1]{{\color{green} [#1]}}
 
 \newcommand{\given}{\,|\,}
 \newcommand{\setof}[1]{\left\{{#1}\right\}}
@@ -16,7 +16,10 @@
 
 \newcommand{\eqn}[1]{eq.~(\ref{eq:#1})}
 \newcommand{\fig}[1]{Fig.~\ref{fig:#1}}
+\newcommand{\sect}[1]{\S\ref{sec:#1}}
 \newcommand{\paper}{paper}
+
+\newcommand{\apj}{ApJ}
 
 \title{A Review of Histograms}
 \author{Jake Vanderplas}
@@ -37,23 +40,105 @@
 \end{abstract}
 
 \section{Introduction}
-Probably first used by John Graunt in 1662 \citep{Scott1979}
-Term coined by Karl Pearson at the end of the 19th century.
-[History of histograms and their use in database management systems:
-\citet{Ioannidis2003}].
+\label{sec:intro}
 
-\subsection{Histograms as Density Estimators}
-notation and relationship to KDE.  Good KDE references/reviews?
+The term {\it histogram}, which denotes the familiar type of diagram
+which shows the counts of data within specified bins, was coined by
+Karl Pearson at the end of the 19$^{\rm th}$ century \citep{Stigler1986}.
+The use of histograms for the representation of data, however, goes back
+much farther, most likely to the studies of mortality statistics
+by \citet{Graunt1662} \citep[though see discussion in][]{Scott1992}.
+The linguistic origin of Pearson's {\it histogram} is unclear: some suggest
+it may have been derived from Greek, as an amalgamation of the words
+$\iota\sigma\tau o s$ (`isto-s'={\it mast}) and
+$\gamma\rho\alpha\mu\mu\alpha$ (`gram-ma'={\it something written}), evoking
+the rising masts of a ship \citep[e.g.][]{Ioannidis2003}.  Others suggest
+that the word may have been born as a contraction of ``historical diagram''
+\citep[e.g.][]{Flood2011}, oweing to its common use in the visualization of
+historical trends.  Linguistic uncertainty aside,
+the histogram was one of several well-known
+statistical tools invented or popularized by Karl Pearson.
+Because of its simplicity of both computation and interpretation, the
+histogram remains one of the most often-used tools for visualization
+of data across many disciplines.
 
-\subsection{Rules of Thumb}
-\begin{itemize}
-\item mention ``at least $K$ in each bin''-type rules
-  (and Microsoft Excel's silly $\sqrt{n}$ rule).
-\end{itemize}
+Despite their commonality, histograms have some subtleties which are
+not always appreciated, and can be misleading if not used carefully.
+When creating a histogram, the number and locations of bins are
+free parameters which must be chosen by the researcher.
+The particular choice of these parameters can greatly
+affect the interpretation of the resulting diagram.
 
-\subsection{Sturges' Rule}
-Perhaps the earliest rule-of-thumb for choosing histogram bin widths is
-Sturges' Rule \citep{Sturges1926}:
+\fig{hist_pitfalls} shows two possible situations in which the binning choice
+has a disproportionate effect on the interpretation of the data.  The upper
+panels show two histogram visualizations of the same 20 data points.  Both
+histograms use the same number of bins, but those of the second panel are
+offset by 0.25 in $x$.  This offset leads to a qualitatively different
+visualization, and could lead to interpreting the bimodal data as a single
+broad distribution.  The lower panels show two visualizations of a larger
+data set -- consisting of 3000 points -- with two different binning schemes.
+The number of bins used for the visualization leads to vastly different
+data representations.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.8\textwidth]{fig_hist_pitfalls.pdf}
+  \label{fig:hist_pitfalls}
+  \caption{A visualization of potential pitfalls of histogram representations.
+    The top panels show two different histogram visualizations of the same
+    set of twenty data points, each with the same size bins but offset by
+    0.25 in $x$ \citep[adapted from][]{Ivezic2013}.
+    This shows how the bin offset can affect the data interpretation.
+    The bottom panels show two different histogram visualizations of the
+    same set of 3000 data points, using 12 and 120 bins respectively.
+    This shows that using too few bins can obscure detail in the data.}
+\end{figure}
+
+This strong dependence of the visualization on the choice of binning is
+and unfortunate property, especially given that most users of histograms
+do not use any rigorous method to choose the parameters, instead relying
+on trial-and-error.  The result is that the researcher settles
+on the configuration that looks ``right'', potentially biasing
+the resulting interpretation toward the expectations of the researcher.
+
+In this paper we address this problem, and review several methods proposed
+in the literature for rigorously choosing the optimal histogram binning for
+a particular set of data.  We begin in \sect{theory} with a brief summary
+of the theory of Histograms as non-parametric density estimators.  In
+\sect{rules_of_thumb}-\sect{variable_width} we explore
+progressively more rigorous frameworks by which to select the optimal
+binning.  We provide some practical examples in \sect{examples}, and
+conclude in \sect{conclusion}.
+
+
+\section{Theory: Histograms and Density Estimation}
+\label{sec:theory}
+
+A histogram is a visualization of the number of observations of data points
+within each of a series of non-overlapping bins.  When the histogram is
+normalized (such that the integral is unity), it can be thought of as an
+estimator of the density distribution of the observations.
+In this sense, the histogram is the most simple of a class of
+{\it non-parametric density estimators}, useful in data mining, including
+data visualization.  For a text-length introduction to histograms within
+this context, see \citet{Scott1992}.
+
+\begin{enumerate}
+  \item define notation
+  \item define MSE and MISE
+  \item discuss relationship to KDE \& optimality of KDE
+\end{enumerate}
+
+
+\section{Rules of Thumb}
+\label{sec:rules_of_thumb}
+\begin{enumerate}
+  \item mention in passing ``at least $K$ in each bin''-type rules
+    (and Microsoft Excel's silly $\sqrt{n}$ rule).
+\end{enumerate}
+
+Perhaps the earliest nontrivial rule-of-thumb for choosing histogram
+bin widths is Sturges' Rule \citep{Sturges1926}:
 \begin{equation}
   \label{eqn:sturges}
   \hat{k} = 1 + \log_2(n)
@@ -77,11 +162,16 @@ samples much larger than $N \approx 100$, Sturges' rule results in greatly
 over-smoothed histograms, and thus it should not be relied upon in practice
 \citep{Scott2009}.
 
-\subsection{Asymptotic Approximations}
-Mention that \citet{Birge2003} explores various loss functions... here
-and below we will focus on the mean integrated square error.
+\comment{Note also \citet{Doane1976} extention to Sturges' rule based on
+  measured kurtosis of the distribution.}
 
-\subsubsection{Scott's Rule}
+\section{Asymptotic Approximations}
+\label{sec:asymptotic_approx}
+\comment{Mention that \citet{Birge2003} explores various loss functions...
+  here and below we will focus on the mean integrated square error ($L_2$ loss)}
+\comment{Note to self: take a look at references within \citet{Birge2003}}
+
+\subsection{Scott's Rule}
 By minimizing the MISE in the limit of large $n$ and small $h_n$, 
 \citep{Scott1979} found
 \begin{equation}
@@ -103,42 +193,45 @@ based on the kurtosis of the distribution can be applied to remedy this.  See
 discussion in \citet{Scott1979} for details.
 
 
-\subsubsection{Freedman-Diaconis rule}
+\subsection{Freedman-Diaconis rule}
 \citep{Freedman1981}
 Very similar to Scott's Rule, but a more rigorous (vide: opaque) derivation.
 \citet{Freedman1981} state that they will report their numerical simulations
 elsewhere... I have yet to find them.
 
-\section{Fitness-based Functions}
+\section{Equal-width Optimizers}
+\label{sec:equal_width}
 
-\subsection{Fixed-width Bins}
-\begin{enumerate}
-\item Knuth's Method \citep{Knuth2006}
-\item Hogg's Method \citep{Hogg2008}
-\end{enumerate}
+\subsection{Cross-Validation: Hogg's Method}
+\citep{Hogg2008}
 
-\subsection{Variable-width Bins}
-Mention that \citet{Birge2003} recommends against this...
-\begin{enumerate}
-\item Bayesian Blocks \citep{Scargle2012}
-\end{enumerate}
+\subsection{Bayesian Optimization: Knuth's Method}
+\citep{Knuth2006}
+
+\section{Variable-width Optimizer: Bayesian Blocks}
+\label{sec:variable_width}
+\begin{itemize}
+  \item Mention that \citet{Birge2003} recommends against this, but
+    \citet{Scott1992} suggests this can be useful.
+\end{itemize}
+
+\subsection{Bayesian Blocks}
+\citep{Scargle1998, Scargle2012}
 
 \section{Examples}
-Some example Plots
+\label{sec:examples}
+Show some examples, comparing the above approaches, with code from astroML.
 
 \section{Conclusion}
-Recommendations: which of these should be used in practice?
+\label{sec:conclusion}
+Recommendations: which of these should be used in practice and when?
 
 \bibliography{histograms}
 
 \begin{appendix}
-\section{Derivations}
-
-Some math comparing the methods here...
-
-
 \section{Python Code}
-Some examples using astroML
+Show basic code used to generate figures in the examples section;
+show how to access astroML.
 
 
 \end{appendix}
