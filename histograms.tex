@@ -6,7 +6,7 @@
 \usepackage{amsmath}
 
 \usepackage{color}
-\newcommand{\comment}[1]{{\color{green} [#1]}}
+\newcommand{\comment}[1]{{\color{blue} [#1]}}
 
 \newcommand{\given}{\,|\,}
 \newcommand{\setof}[1]{\left\{{#1}\right\}}
@@ -123,90 +123,246 @@ In this sense, the histogram is the most simple of a class of
 data visualization.  For a text-length introduction to histograms within
 this context, see \citet{Scott1992}.
 
-\begin{enumerate}
-  \item define notation
-  \item define MSE and MISE
-  \item discuss relationship to KDE \& optimality of KDE
-\end{enumerate}
+\subsection{Notation}
+In this paper, we will consider one-dimensional histograms for simplicity.
+Many of the ideas below can be naturally extended to two dimensions, as is
+done in several papers cited below \citep[see, e.g.][]{Hogg2008, Knuth2006}.
+We will consider a data set consisting of $N$ points, $\{x_n\}_{n=1}^{N}$,
+within $M$ non-overlapping bins of width $V_m$.  The bin with index
+$m$ contains $N_m$ points, such that $N = \sum_{m=1}^M N_m$.  The bins are
+assumed to be adjacent, so that $V = \sum_{m=1}^M V_m$ is the total range
+of the data to be considered.  We'll also make use of the function
+$m(x)$, which returns the unique bin index $m$ which contains the value $x$.
+
+We will assume that our data $\{x_n\}$ are drawn from a true probability
+distribution function (pdf) $f(x)$.  A normalized histogram can be viewed
+as a piecewise-constant approximation to $f(x)$, given by
+\begin{equation}
+  \label{eq:hist_pdf}
+  \hat{f}(x|\theta) = \frac{\pi_{m(x)}}{V_{m(x)}}
+\end{equation}
+where $\pi_m$ is the individual bin probability, and $\theta$ is the vector
+of model parameters which describes the number and locations of bins.
+By construction, $\hat{f}(x|\theta)$ is normalized such that
+$\int_{-\infty}^\infty \hat{f}(x|\theta)\dd x = 1$ and $\sum_{m=1}^M \pi_m = 1$.
+For classical histograms, one usually chooses equal bin widths
+\begin{equation}
+  V_m^{\rm classical} =  V/M
+\end{equation}
+ and probabilities given by
+\begin{equation}
+  \pi_m^{\rm classical} = N_m / N,
+\end{equation}
+i.e.\ $\pi_m$ is the fraction of observed points which fall within bin $m$.
+We will see below that this may not always be the optimal choice.
+
+\subsection{Measuring Optimality}
+Clearly the number of bins $M$ and the bin widths $V_m$ will affect the
+suitability of the estimator $\hat{f}(x|\theta)$ in approximating the true
+distribution $f(x)$ (see, e.g.\ \fig{hist_pitfalls}).
+Too few bins lead to an over-smoothing of the data,
+potentially missing important features of the data (a high-bias estimator).
+Too many bins leads to a very noisy representation of the data
+(a high-variance estimator).  The optimal result lies somewhere between
+these two extremes.
+
+The optimality can be quantified by comparing the true distribution $f(x)$ to
+the estimate $\hat{f}(x|\theta)$.  One way to make this comparison is to use
+the Mean Square Error (MSE), given by
+\begin{equation}
+  MSE(x|\theta) = E[\hat{f}(x|\theta) - f(x)]^2.
+\end{equation}
+The integral of the localized MSE over the entire data range is the
+Integrated Mean Square Error (IMSE),
+\begin{equation}
+  \label{eq:IMSE}
+  IMSE(x|\theta) = \int_{-\infty}^\infty E[\hat{f}(x|\theta) - f(x)]^2 \dd x 
+\end{equation}
+It can be shown that the IMSE of a histogram estimate
+asymptotically converges to zero at a rate $\mathcal{O}[N^{-2/3}]$
+\citep{Scott1979}\footnote{For Kernel Density Estimation (KDE),
+  the IMSE can be shown to converge at
+  a slightly faster rate: $\mathcal{O}[N^{-4/5}]$. Under weak assumptions,
+  this asymptotic convergence rate can be shown to be the maximum achievable
+  by nonparametric estimators \citep{Wahba1975}.}
+In practice the IMSE cannot be computed without knowledge of the true
+distribution $f(x)$.  Nevertheless, as we will show below, even when the
+true $f(x)$ is unknown, the IMSE can be useful in deciding on the optimal
+number of bins.
+
+\comment{Aside about other loss functions?  \citet{Birge2003} explores
+  extensions of $L_2$ loss, and \citet{Rudemo1982} uses the KL divergence.}
+
+\comment{Note to self: take a look at references within \citet{Birge2003}}
+
+\comment{Aside about KDE?  Why use quantitative histograms when KDE shows
+  better asymptotic convergence?}
 
 
 \section{Rules of Thumb}
 \label{sec:rules_of_thumb}
-\begin{enumerate}
-  \item mention in passing ``at least $K$ in each bin''-type rules
-    (and Microsoft Excel's silly $\sqrt{n}$ rule).
-\end{enumerate}
+Though many statistical packages use a fixed default histogram binning,
+(e.g.\ 10 bins in MatLab) several simple heuristics
+exist for selecting a suitable binning.  Perhaps the simplest is to choose
+a small number $K$ and adjust the bins such that each contains at least $K$
+points.  This heuristic is intuitively appealing, and may have
+influenced the default $M \approx \sqrt{N}$ used in, e.g.\ Microsoft Excel.
+We'll see below that such a rule is not optimal for most data sets.
 
-Perhaps the earliest nontrivial rule-of-thumb for choosing histogram
-bin widths is Sturges' Rule \citep{Sturges1926}:
+Perhaps the earliest quantitatively derived rule-of-thumb for choosing
+histogram bin widths is Sturges' Rule \citep{Sturges1926}:
 \begin{equation}
-  \label{eqn:sturges}
-  \hat{k} = 1 + \log_2(n)
+  \label{eq:sturges}
+  \hat{M} = 1 + \log_2(N)
 \end{equation}
 Sturges' original paper gives only a brief verbal argument for this result.
 As elucidated in \citet{Scott2009}, Sturges' rule is derived from the
 assumption that the underlying distribution is close to Gaussian, and
-can be approximated by a binomial distribution within the bins.  For $k$ bins,
-he assumed that the number of points in the $i^{th}$ bin is 
+can be approximated by a binomial distribution within the bins.  For $M$ bins,
+Sturges assumed that the number of points in the $m^{th}$ bin is 
 \begin{equation}
-  n_i = \binom{k - 1}{i}.
+  N_m = \binom{M - 1}{m}.
 \end{equation}
 Summing these over all bins and using the binomial identity gives
 \begin{eqnarray}
-  n &=& \sum_{i=0}^{k-1} \binom{k-1}{i}\\
-    &=& 2^{k - 1}
+  N &=& \sum_{i=0}^{M-1} \binom{M-1}{m}\\
+    &=& 2^{M - 1}
 \end{eqnarray}
+from which \eqn{sturges} follows.
 Oweing to the simplicity of computing \eqn{sturges}, it is a very commonly
-used rule-of-thumb in statistical software packages.  Nevertheless, for
-samples much larger than $N \approx 100$, Sturges' rule results in greatly
+used rule-of-thumb in statistical software packages (e.g.\ it is used by
+default in the R language).  Nevertheless, for
+samples much larger than $N \approx 100$, Sturges' rule can result in greatly
 over-smoothed histograms, and thus it should not be relied upon in practice
 \citep{Scott2009}.
 
 \comment{Note also \citet{Doane1976} extention to Sturges' rule based on
   measured kurtosis of the distribution.}
 
+
 \section{Asymptotic Approximations}
 \label{sec:asymptotic_approx}
-\comment{Mention that \citet{Birge2003} explores various loss functions...
-  here and below we will focus on the mean integrated square error ($L_2$ loss)}
-\comment{Note to self: take a look at references within \citet{Birge2003}}
+A more sophisticated approach to the problem of optimal bin selection
+involves minimizing the IMSE in \eqn{IMSE} directly, under certain
+reasonable assumptions about the form of the true $f(x)$.
 
-\subsection{Scott's Rule}
-By minimizing the MISE in the limit of large $n$ and small $h_n$, 
-\citep{Scott1979} found
+\citet{Scott1979} considered the case of equal-width bins, $V=V_m$.
+With some reasonable assumptions about the smoothness of the true
+distribution $f(x)$, he showed that
+minimizing the IMSE in the limit of large $N$ and small $V$ gives
+{\it Scott's Rule} for the optimal bin width
 \begin{equation}
   \label{eq:scotts_rule}
-  h^\ast = \left[\frac{6}{\int_{-\infty}^\infty f^\prime(x)^2 \dd x}\right]^{1/3}
+  \hat{V}_{\rm S}(N) = \left[\frac{6}{\int_{-\infty}^\infty f^\prime(x)^2 \dd x}\right]^{1/3}
   N^{-1/3}
 \end{equation}
-For a Gaussian distribution with standard deviation $\sigma$, this is 
-\begin{eqnarray}
+For $f(x)$ given by a normal distribution with standard deviation $\sigma$,
+the integral in the denominator is equal to $[4\sqrt{\pi}\sigma^3]^{-1}$,
+yielding
+\begin{equation}
   \label{eq:scotts_rule_norm}
-  h^\ast &=& (24\sqrt{\pi})^{1/3}\sigma N^{-1/3}\\
-        &\approx& 3.49 \sigma N^{-1/3}
-\end{eqnarray}
+  \hat{V}(N)\approx 3.49 \sigma N^{-1/3}
+\end{equation}
+Because $\sigma$ can be estimated quickly using the sample standard deviation
+of the data, \eqn{scotts_rule_norm} is a fast
+prescription for choosing the bin size given an arbitrary data set.
+
 \citet{Scott1979} tests this approximation for small sample sizes using Monte
 Carlo techniques, and finds that the approximation is adequate for samples
-as small as 25.  For distributions which differ from Gaussian,
-\eqn{scotts_rule_norm} over-smooths the distribution, and a correction factor
-based on the kurtosis of the distribution can be applied to remedy this.  See
-discussion in \citet{Scott1979} for details.
+as small as 25.  For distributions which differ from Gaussian (i.e.\ are
+skewed or multi-model), \eqn{scotts_rule_norm} over-smooths the
+distribution, and a correction factor based on the sample kurtosis can
+be applied to remedy this.  See
+the discussion in \citet{Scott1979} for details.
 
+\citet{Freedman1981} follow a derivation similar to that of Scott's rule,
+and from numerical studies choose a rule based on the
+inter-quartile range of the data.  The {\it Freedman-Diaconis Rule} is
+given by
+\begin{equation}
+  \hat{V}_{\rm FD}(N) = 2\; IQ(\{x_n\})\; N^{-1/3}.
+\end{equation}
+The interquartile range is a more robust estimate of the width of a
+distribution than the sample standard deviation, and thus the Freedman-Diaconis
+rule can be better behaved for some distributions.  For normally distributed
+data, it can be shown that
+\begin{equation}
+  IQ_{\rm norm} \approx 1.35 \sigma_{\rm norm}
+\end{equation}
+\citep[see, e.g.][]{Ivezic2013} so the Freedman-Diaconis and Scott bin sizes
+are related by $\hat{V}_{FD} \approx 1.3 \hat{V}_{S}$.
 
-\subsection{Freedman-Diaconis rule}
-\citep{Freedman1981}
-Very similar to Scott's Rule, but a more rigorous (vide: opaque) derivation.
-\citet{Freedman1981} state that they will report their numerical simulations
-elsewhere... I have yet to find them.
+\comment{also mention \citet{Stone1984} and \citet{Rudemo1982}?}
+
 
 \section{Equal-width Optimizers}
 \label{sec:equal_width}
+The rules discussed above optimize the IMSE by making certain assumptions
+about the true distribution $f(x)$.  For distributions which differ
+significantly from normal, better binning can be obtained by relaxing this
+assumption. In this section we describe two such approaches: the
+cross-validation approach proposed by \citet{Hogg2008}, and the Bayesian
+approach proposed by \citet{Knuth2006}.
 
 \subsection{Cross-Validation: Hogg's Method}
-\citep{Hogg2008}
+If we have a distribution $f(x)$, then the log-likelihood of a point $x_n$
+being chosen from that distribution is $L_n = \log f(x_n)$.  For $N$ points,
+the overall log-likelihood is simply the sum of the individual likelihoods:
+\begin{equation}
+  L(\{x_n\}) = \sum_{n=1}^N \log f(x_n).
+\end{equation}
+If we have a space of candidate pdf estimates $\hat{f}(x|\theta)$,
+then the maximum-likelihood estimate (MLE) of the distribution
+parameters $\theta$ is
+\begin{equation}
+  \hat{\theta}_{MLE} = \arg\max_\theta \sum_{n=1}^N \log \hat{f}(x_n|\theta).
+\end{equation}
+\citet{Hogg2008} proposed to use this framework and arrive at an optimal
+binning $\hat{\theta}$ using cross-validation.
+
+\comment{$\cdots$}
+
+One problem quickly becomes apparent: if $f(x_n)$ is equal to zero for
+any $x_n$, then the log-likelihood diverges.
+
+\comment{$\cdots$}
+
+Hogg proposed that given $M$ equal bins, the estimated pdf is given by
+\eqn{hist_pdf} with the bin probability given by
+\begin{equation}
+  \label{eq:Hogg_probability}
+  \pi_m^{\rm Hogg} = \frac{N_m + \alpha}{\sum_{m=1}^M[N_m + \alpha]}
+\end{equation}
+where $\alpha$ is a regularization term of order unity which assures that
+no bin has a zero probability.  The cross-validated likelihood then becomes
+\begin{equation}
+  L = \sum_{m=1}^M N_m \log\left(
+    \frac{N_m + \alpha - 1}
+    {V_m\left[
+        \sum_{m^\prime}\left(
+          N_{m^\prime} + \alpha
+        \right) - 1
+      \right]}
+    \right).
+\end{equation}
+Maximizing this over the number of bins $M$ yields an optimal solution for
+a given regularization $\alpha$.
+
+\comment{Show some example histograms}
 
 \subsection{Bayesian Optimization: Knuth's Method}
-\citep{Knuth2006}
+\citet{Knuth2006} proposes a similar scheme to \citet{Hogg2008}, but based
+on Bayesian model selection.
+
+\comment{Relate Hogg approach to Knuth approach.  Knuth's $\langle\pi_m\rangle$
+  matches \eqn{Hogg_probability} with $\alpha = 1/2$
+  (which comes from the Jeffrey's prior for the multinomial
+  likelihood).  
+  My suspicion is that using a flat rather than Jeffrey's prior would change
+  $\alpha$ by 1... I haven't checked this.
+  
+  Emphasize that Knuth's method {\it derives} the correction
+  $\alpha$ which Hogg's method leaves as a free parameter.}
 
 \section{Variable-width Optimizer: Bayesian Blocks}
 \label{sec:variable_width}
@@ -215,7 +371,6 @@ elsewhere... I have yet to find them.
     \citet{Scott1992} suggests this can be useful.
 \end{itemize}
 
-\subsection{Bayesian Blocks}
 \citep{Scargle1998, Scargle2012}
 
 \section{Examples}
